@@ -1,0 +1,68 @@
+name: npm CI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      IS_DEVELOPMENT_VERSION: ${{ steps.npm_build.outputs.IS_DEVELOPMENT_VERSION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+      - id: npm_build
+        name: Build with npm
+        run: |
+          chmod +x ./scripts/github/*.sh
+          ./scripts/github/build.sh
+      - name: Upload the changes of Maven repository as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # 指定要上传的目录在上传到当前Actions运行实例的Artifacts当中时要使用的名字
+          name: maven-repo-changes
+          # 要上传的目录路径（以项目根目录为相对路径起始点）
+          path: maven-repo-changes
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Download the changes of Maven repository
+        uses: actions/download-artifact@v4
+        with:
+          # 指定在之前的job当中，上传到Actions运行实例的Artifacts当中的目录所使用的名字
+          name: maven-repo-changes
+          # 指定要将这一目录下的所有内容（即不包含目录本身）下载到哪个位置（以项目根目录为相对路径起始点）
+          path: maven-repo-changes
+      - name: Merge the changes into Maven repository and publish
+        env:
+          REMOTE_MAVEN_REPO_URL: ${{ secrets.REMOTE_MAVEN_REPO_URL }}
+          IS_DEVELOPMENT_VERSION: ${{ needs.build.outputs.IS_DEVELOPMENT_VERSION }}
+        run: |
+          chmod +x ./scripts/github/*.sh
+          # ./scripts/github/publish.sh
+
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'README.md'
+  pull_request:
+    branches:
+      - dev
+    paths-ignore:
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+      - 'README.md'
