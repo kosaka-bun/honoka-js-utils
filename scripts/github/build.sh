@@ -72,9 +72,10 @@ local-publish() {
     project_is_development_version=false
   fi
 
-  # 与全局版本号的类型不匹配，不发布
-  if [ "$is_development_version" != "$project_is_development_version" ]; then
-    return
+  # 不将dev版本的包发布到release仓库
+  if [ "$is_development_version" == 'false' && "$project_is_development_version" == 'true' ]; then
+    echo 'Cannot publish project with development version to release registry!'
+    exit 10
   fi
 
   npm publish --registry=http://localhost:4873
