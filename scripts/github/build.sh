@@ -5,6 +5,8 @@ set -e
 cd $(dirname "$0")/../..
 PROJECT_PATH="$(pwd)"
 
+npm install
+
 check_version_of_projects_out='
 results.projectsPassed=false
 results.dependenciesPassed=false
@@ -19,15 +21,15 @@ results.dependenciesPassed=false
 # 忽略单行命令的异常。
 # true是一个shell命令，它的返回值始终为0，false命令的返回值始终为1。
 #
-projects_passed=$(echo "$check_version_of_projects_out" | grep -i "results.projectsPassed=true") || true
-dependencies_passed=$(echo "$check_version_of_projects_out" | grep -i "results.dependenciesPassed=true") || true
+projects_passed=$(echo "$check_version_of_projects_out" | grep -i 'results.projectsPassed=true') || true
+dependencies_passed=$(echo "$check_version_of_projects_out" | grep -i 'results.dependenciesPassed=true') || true
 # -z表示字符串为空，-n表示字符串不为空
 if [ -n "$projects_passed" ] && [ -z "$dependencies_passed" ]; then
   echo 'Projects with release version contain dependencies with development version!'
   exit 10
 fi
 
-# 打包，并发布到一个空的npm registry中
+# 构建并发布到本地npm仓库
 registry_name=development
 is_development_version=true
 
@@ -38,25 +40,23 @@ else
   is_development_version=false
 fi
 
-mkdir -p maven-repo/repository/npm/$registry_name
 echo "IS_DEVELOPMENT_VERSION=$is_development_version" >> "$GITHUB_OUTPUT"
 
+# 将存储npm仓库文件的Git仓库clone到项目根目录下
+git clone "$REMOTE_NPM_REGISTRY_URL" maven-repo
 mkdir -p ~/.config/verdaccio
 mkdir -p ~/.local/share/verdaccio/storage
-cp files/verdaccio/htpasswd ~/.config/verdaccio/
-cp -r files/verdaccio/storage/. ~/.local/share/verdaccio/storage/
-cp files/verdaccio/.local-npmrc ./
-mv .local-npmrc .npmrc
+mkdir -p maven-repo/repository/npm/$registry_name
 
-npm install -g verdaccio
+# 还原verdaccio的环境
+npm install -g verdaccio@6.1.6
+
+cp -f maven-repo/files/verdaccio/.npmrc ./
+cp -f maven-repo/files/verdaccio/htpasswd ~/.config/verdaccio/
+cp -rf maven-repo/files/verdaccio/storage/. ~/.local/share/verdaccio/storage/
+cp -rf maven-repo/repository/npm/$registry_name/. ~/.local/share/verdaccio/storage/
+
 nohup verdaccio > /dev/null 2>&1 &
 sleep 3s
 
 npm publish --registry=http://localhost:4873
-cp -rf ~/.local/share/verdaccio/storage/* maven-repo/repository/npm/$registry_name/
-
-# 将maven-repo/repository目录打包，然后将tar移动到另一个单独的目录中
-find maven-repo/repository -type f -name ".verdaccio*" -delete
-tar -zcf maven-repo.tar.gz maven-repo/repository
-mkdir maven-repo-changes
-mv maven-repo.tar.gz maven-repo-changes/

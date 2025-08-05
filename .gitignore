@@ -1,4 +1,5 @@
 .npmrc
+/maven-repo/
 
 # Logs
 logs/
