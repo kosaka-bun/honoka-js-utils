@@ -32,7 +32,7 @@ on:
       - dev
     paths-ignore:
       - 'docs/**'
-      - '.gitignore'
+      - '**/.gitignore'
       - 'LICENSE'
       - 'README.md'
   pull_request:
@@ -40,6 +40,6 @@ on:
       - dev
     paths-ignore:
       - 'docs/**'
-      - '.gitignore'
+      - '**/.gitignore'
       - 'LICENSE'
       - 'README.md'

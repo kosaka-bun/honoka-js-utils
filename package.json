@@ -1,9 +1,5 @@
 {
-  "name": "@honoka/js-utils",
+  "name": "@honoka/js-sdk",
   "version": "1.0.0-dev",
-  "license": "Apache-2.0",
-  "exports": {
-    ".": "./src/basic/index.js",
-    "./android": "./src/android/index.js"
-  }
+  "license": "Apache-2.0"
 }

@@ -1,3 +1,3 @@
-# Honoka JS Utils
+# Honoka JS SDK
 
 Web开发实用工具包

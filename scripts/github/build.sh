@@ -5,35 +5,14 @@ set -e
 cd $(dirname "$0")/../..
 PROJECT_PATH="$(pwd)"
 
-npm install
+# 检查根项目版本号
+root_version=$(cat package.json | grep '"version":')
+echo "Root version: ($root_version)"
 
-check_version_of_projects_out='
-results.projectsPassed=false
-results.dependenciesPassed=false
-'
-
-#
-# 检查版本号
-#
-# 当grep命令未找到匹配的字符串时，将返回非0的返回值（返回值为Exit Code，不是程序的输出内容，
-# 可通过“$?”得到上一行命令的返回值）。
-# 文件设置了set -e，任何一行命令返回值不为0时，均会中止脚本的执行，在命令后加上“|| true”可
-# 忽略单行命令的异常。
-# true是一个shell命令，它的返回值始终为0，false命令的返回值始终为1。
-#
-projects_passed=$(echo "$check_version_of_projects_out" | grep -i 'results.projectsPassed=true') || true
-dependencies_passed=$(echo "$check_version_of_projects_out" | grep -i 'results.dependenciesPassed=true') || true
-# -z表示字符串为空，-n表示字符串不为空
-if [ -n "$projects_passed" ] && [ -z "$dependencies_passed" ]; then
-  echo 'Projects with release version contain dependencies with development version!'
-  exit 10
-fi
-
-# 构建并发布到本地npm仓库
 registry_name=development
 is_development_version=true
 
-if [ -z "$projects_passed" ]; then
+if echo "$root_version" | grep -q 'dev'; then
   echo -e '\n\nUsing development registry to publish artifacts.\n'
 else
   registry_name=release
@@ -51,12 +30,54 @@ mkdir -p maven-repo/repository/npm/$registry_name
 # 还原verdaccio的环境
 npm install -g verdaccio@6.1.6
 
-cp -f maven-repo/files/verdaccio/.npmrc ./
 cp -f maven-repo/files/verdaccio/htpasswd ~/.config/verdaccio/
-cp -rf maven-repo/files/verdaccio/storage/. ~/.local/share/verdaccio/storage/
+cp -rf maven-repo/files/verdaccio/storage/$registry_name/. ~/.local/share/verdaccio/storage/
 cp -rf maven-repo/repository/npm/$registry_name/. ~/.local/share/verdaccio/storage/
 
 nohup verdaccio > /dev/null 2>&1 &
 sleep 3s
 
-npm publish --registry=http://localhost:4873
+# 构建并发布到本地npm仓库
+local-publish() {
+  if [ -z "$1" ]; then
+    echo 'Must specify a project name!'
+    exit 10
+  fi
+
+  cd $PROJECT_PATH/$1
+  cp -f ../maven-repo/files/verdaccio/.npmrc ./
+
+  # 检查项目版本号
+  echo "Check versions of $1:"
+  npm run check-versions
+
+  check_versions_out=$(npm run check-versions)
+
+  #
+  # 当grep命令未找到匹配的字符串时，将返回非0的返回值（返回值为Exit Code，不是程序的输出内容，
+  # 可通过“$?”得到上一行命令的返回值）。
+  # 文件设置了set -e，任何一行命令返回值不为0时，均会中止脚本的执行，在命令后加上“|| true”可
+  # 忽略单行命令的异常。
+  # true是一个shell命令，它的返回值始终为0，false命令的返回值始终为1。
+  #
+  project_passed=$(echo "$check_versions_out" | grep -i 'results.projectPassed=true') || true
+  dependencies_passed=$(echo "$check_versions_out" | grep -i 'results.dependenciesPassed=true') || true
+  project_is_development_version=true
+  # -z表示字符串为空，-n表示字符串不为空
+  if [ -n "$project_passed" ]; then
+    if [ -z "$dependencies_passed" ]; then
+      echo 'Project with release version contains dependencies with development version!'
+      exit 10
+    fi
+    project_is_development_version=false
+  fi
+
+  # 与全局版本号的类型不匹配，不发布
+  if [ "$is_development_version" != "$project_is_development_version" ]; then
+    return
+  fi
+
+  npm publish --registry=http://localhost:4873
+}
+
+local-publish js-utils

@@ -1,0 +1,13 @@
+{
+  "name": "@honoka/js-utils",
+  "version": "1.0.0-dev",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/basic/index.js",
+    "./android": "./src/android/index.js"
+  },
+  "scripts": {
+    "check-versions": "node ./test/check-versions.js"
+  }
+}
