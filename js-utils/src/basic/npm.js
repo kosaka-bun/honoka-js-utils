@@ -1,3 +1,4 @@
+import fs from 'fs'
 import logUtils from './log.js'
 
 const npmUtils = {
@@ -29,6 +30,25 @@ const npmUtils = {
     console.log(`results.projectPassed=${projectPassed}`)
     console.log(`results.dependenciesPassed=${dependenciesPassed}`)
     logUtils.seperator()
+  },
+  removeExistingPackage(packageJson, registryPath) {
+    if(!registryPath) return
+    let packageName = packageJson.name
+    if(packageName.includes('/')) {
+      packageName = packageName.substring(packageName.indexOf('/') + 1)
+    }
+    let path = `${registryPath}/${packageJson.name}`
+    let fileName = `${packageName}-${packageJson.version}.tgz`
+    fs.rmSync(`${path}/${fileName}`, {
+      force: true
+    })
+    //noinspection JSCheckFunctionSignatures
+    let info = JSON.parse(fs.readFileSync(`${path}/package.json`))
+    delete info.versions[packageJson.version]
+    delete info.time[packageJson.version]
+    delete info['dist-tags']['latest']
+    delete info['_attachments'][fileName]
+    fs.writeFileSync(`${path}/package.json`, JSON.stringify(info, null, 4))
   }
 }
 

@@ -5,6 +5,8 @@ set -e
 cd $(dirname "$0")/../..
 PROJECT_PATH="$(pwd)"
 
+projects_to_publish=(js-utils)
+
 # 检查根项目版本号
 root_version=$(cat package.json | grep '"version":')
 echo "Root version: ($root_version)"
@@ -21,18 +23,32 @@ fi
 
 echo "IS_DEVELOPMENT_VERSION=$is_development_version" >> "$GITHUB_OUTPUT"
 
+#
+# 带有~的路径如果被引号包围，则有时不会被解析为当前用户的home目录，而是当前目录下的“~”目录，
+# 因此不建议将带~的路径用引号包围起来。
+#
+local_registry_path=~/.local/share/verdaccio/storage
+
 # 将存储npm仓库文件的Git仓库clone到项目根目录下
 git clone "$REMOTE_NPM_REGISTRY_URL" maven-repo
 mkdir -p ~/.config/verdaccio
-mkdir -p ~/.local/share/verdaccio/storage
+mkdir -p $local_registry_path
 mkdir -p maven-repo/repository/npm/$registry_name
 
 # 还原verdaccio的环境
 npm install -g verdaccio@6.1.6
 
 cp -f maven-repo/files/verdaccio/htpasswd ~/.config/verdaccio/
-cp -rf maven-repo/files/verdaccio/storage/$registry_name/. ~/.local/share/verdaccio/storage/
-cp -rf maven-repo/repository/npm/$registry_name/. ~/.local/share/verdaccio/storage/
+cp -rf maven-repo/files/verdaccio/storage/$registry_name/. $local_registry_path/
+cp -rf maven-repo/repository/npm/$registry_name/. $local_registry_path/
+
+# 移除仓库中已存在的与当前项目中的模块版本相同的包
+for project in "${projects_to_publish[@]}"; do
+  cd $PROJECT_PATH/$project
+  npm run remove-existing-package -- $local_registry_path
+done
+
+cd $PROJECT_PATH
 
 nohup verdaccio > /dev/null 2>&1 &
 sleep 3s
@@ -81,4 +97,6 @@ local-publish() {
   npm publish --registry=http://localhost:4873
 }
 
-local-publish js-utils
+for project in "${projects_to_publish[@]}"; do
+  local-publish $project
+done
