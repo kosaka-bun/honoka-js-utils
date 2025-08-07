@@ -38,6 +38,10 @@ const npmUtils = {
       packageName = packageName.substring(packageName.indexOf('/') + 1)
     }
     let path = `${registryPath}/${packageJson.name}`
+    if(!fs.existsSync(path)) {
+      console.log(`No such directory: ${path}`)
+      return
+    }
     let fileName = `${packageName}-${packageJson.version}.tgz`
     fs.rmSync(`${path}/${fileName}`, {
       force: true

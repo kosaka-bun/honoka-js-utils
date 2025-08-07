@@ -1,5 +1,5 @@
-.npmrc
-/test/
+.npmrc*
+/scripts/
 
 # Logs
 logs/
