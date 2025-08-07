@@ -2,7 +2,7 @@ name: npm CI
 
 env:
   BUILD_SCRIPTS_REPO: build-scripts
-  BUILD_SCRIPTS_VERSION: master
+  BUILD_SCRIPTS_VERSION: 1.0.0
 
 jobs:
   publish:
