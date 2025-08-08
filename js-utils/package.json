@@ -2,9 +2,5 @@
   "name": "@honoka/js-utils",
   "version": "1.0.0-dev",
   "type": "module",
-  "license": "Apache-2.0",
-  "scripts": {
-    "check-versions": "node ./scripts/check-versions.js",
-    "remove-existing-package": "node ./scripts/remove-existing-package.js"
-  }
+  "license": "Apache-2.0"
 }
