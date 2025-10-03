@@ -18,18 +18,13 @@ class AndroidInterfaceStubUtils {
       timeout: 10 * 1000
     })
     this.#axios.interceptors.response.use(response => {
-      const result = response.data.data ?? {
-        resolved: false,
-        message: null,
-        result: null
-      }
-      if(response.status === 200 && response.data.status && result.resolved) {
+      if(response.status === 200 && response.data.status) {
         console.log(
           `Call ${response.config.url}`,
           '\nparams:', response.config.data,
-          '\nresult:', result.result
+          '\nresult:', response.data.data
         )
-        return result.result
+        return response.data.data
       } else {
         return Promise.reject()
       }
