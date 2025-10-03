@@ -1,6 +1,6 @@
 //noinspection JSUnusedGlobalSymbols
 
-import androidInterfaceStubUtils from '../support/stub.js'
+import androidInterfaceStubUtils from '../stub-utils.js'
 
 const definition = {
   openNewWebActivity: path => {
