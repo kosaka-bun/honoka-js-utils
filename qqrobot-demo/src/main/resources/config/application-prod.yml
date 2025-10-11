@@ -1,18 +1,20 @@
 honoka:
   qqrobot:
-    # 指定一个机器人框架的实现
-    framework: mirai
-    # 机器人要使用的QQ账号及其密码
-    qq: 123456789
-    password: abcdefg
     admin-qq: 12345
     developing-group: 10000
-    # mirai相关配置
-    mirai:
-      # 使用哪个登录协议（不设置默认为android_pad）
-      protocol: android_pad
-      # 日志、临时文件和设备信息文件的存放目录
-      # 默认为：/qqrobot/mirai，请填写相对路径
-      work-directory: /qqrobot/mirai
-      # 是否将框架的日志信息转移到文件中输出（不设置默认为false）
-      redirect-logs: true
+    framework:
+      # 指定一个机器人框架的实现
+      impl: onebot
+      # OneBot相关配置
+      onebot:
+        # 要连接的OneBot服务所在的操作系统的IP地址
+        host: 192.168.128.100
+        # OneBot的正向WebSocket端口
+        websocket-port: 3001
+        # OneBot的HTTP服务端口
+        http-port: 3101
+        #
+        # 若要连接的OneBot服务与本项目未运行在同一个操作系统中，则需要额外在OneBot服务所在的
+        # 操作系统上额外部署file-receiver应用，并在此指定file-receiver的服务端口。
+        #
+        file-receiver-port: 8081

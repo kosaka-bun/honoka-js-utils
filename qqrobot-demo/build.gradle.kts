@@ -15,8 +15,7 @@ group = "de.honoka.qqrobot"
 version = libs.versions.root.get()
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = sourceCompatibility
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
 }
 
 dependencies {
@@ -26,10 +25,8 @@ dependencies {
     //机器人框架
     implementation(libs.qqrobot.spring.boot.starter)
     //一些杂项
-    implementation("com.google.code.gson:gson:2.8.6")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation(libs.honoka.utils)
     listOf(
         libs.lombok,
         "org.springframework.boot:spring-boot-configuration-processor"

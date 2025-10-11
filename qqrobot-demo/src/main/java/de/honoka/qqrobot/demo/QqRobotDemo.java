@@ -9,7 +9,7 @@ public class QqRobotDemo {
     public static void main(String[] args) {
         RobotConsoleWindow demo = RobotConsoleWindow.of("QQ Robot Demo", 1.25, QqRobotDemo.class);
         demo.setOnExit(context -> {
-            context.getBean(DemoSystemService.class).exit();
+            System.out.println("系统退出");
         }).create();
     }
 }
